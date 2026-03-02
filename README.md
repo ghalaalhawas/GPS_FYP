@@ -1,35 +1,149 @@
 # Ghala - GPS Safety App for Driving Abroad
 
-**Final Year Project - 2025/2026**  
-**Author:** [Your Name]  
-**Supervisor:** Crispin Cooper
+**Final Year Project - 2025/2026** | **Supervisor:** Crispin Cooper
 
-## Project Description
+Warns drivers about dangerous road junctions when driving abroad, using OpenStreetMap data and real-time GPS proximity detection.
 
-A mobile application to help drivers stay safe when driving abroad by warning them about dangerous road junctions before they approach them. The app uses OpenStreetMap data to identify potentially hazardous junctions and provides timely audio/visual warnings.
+---
 
-## Project Structure
+## Repository Structure
 
 ```
-Ghala/
-├── docs/               # Documentation
-│   ├── technology_stack_decision.md
-│   └── git_setup_guide.md
-├── research/           # Research notes
-│   ├── osm_research_notes.md
-│   ├── python_libraries_guide.md
-│   └── mobile_frameworks_comparison.md
-├── src/                # Source code (to be added)
-│   ├── data_processing/    # Python scripts for OSM data
-│   └── mobile_app/         # Mobile application code
-├── data/               # Data files (not committed to git)
-│   ├── raw/           # Raw OSM data
-│   └── processed/     # Processed hazard points
-├── plant.txt          # Weekly project plan
-└── README.md          # This file
+GPS_FYP/
+├── src/
+│   ├── osm_parser.py                   # Reusable OSM data loader / parser
+│   ├── 02_detect_junctions.py          # Junction detection & classification
+│   ├── 03_generate_hazard_points.py    # Danger scoring + 75m point displacement
+│   └── 04_export_hazard_data.py        # Export optimised JSON for mobile app
+├── data/
+│   ├── processed/
+│   │   ├── oxford_uk_junctions.geojson
+│   │   ├── oxford_uk_hazard_points.geojson
+│   │   ├── oxford_uk_hazard_mobile.json          # Compact JSON for app (48 KB)
+│   │   ├── oxford_uk_hazard_mobile_pretty.json
+│   │   └── oxford_uk_hazard_mobile_sample50.json
+│   └── visualizations/
+│       ├── oxford,_uk_junctions_all.png
+│       ├── oxford,_uk_junctions_by_type.png
+│       ├── oxford,_uk_danger_scores.png
+│       ├── oxford,_uk_hazard_points.png
+│       └── oxford,_uk_displacement_example.png
+├── mobile_app/GhalaSafetyApp/
+│   ├── App.js                          # Main React Native entry point
+│   ├── app.json
+│   ├── package.json
+│   └── src/
+├── requirements.txt
+└── README.md
 ```
 
-## Technology Stack
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Data processing | Python 3.9+, osmnx, geopandas, shapely, pyproj |
+| Data format | GeoJSON → compact JSON for mobile |
+| Mobile app | React Native (Expo) |
+| Maps | react-native-maps |
+| GPS | expo-location |
+| Spatial index | rbush (R-tree) |
+
+---
+
+## Python Setup
+
+```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate        # Mac/Linux
+venv\Scripts\activate           # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Run the pipeline
+
+```bash
+# 1. Download OSM data (Oxford, UK) - local only, not in repo
+python src/01_download_osm_data.py
+
+# 2. Detect and classify junctions
+python src/02_detect_junctions.py
+
+# 3. Generate displaced hazard warning points
+python src/03_generate_hazard_points.py
+
+# 4. Export optimised JSON for mobile app
+python src/04_export_hazard_data.py
+```
+
+> Steps 2–4 use cached data — no re-download needed if `data/raw/` exists.
+
+### How OSM data is downloaded
+
+OSMnx downloads the street network directly from the OpenStreetMap Overpass API:
+
+```python
+import osmnx as ox
+G = ox.graph_from_place('Oxford, UK', network_type='drive')
+ox.save_graphml(G, filepath='data/raw/oxford_uk_network.graphml')
+```
+
+Alternatively, download `.osm.pbf` files from [Geofabrik](https://download.geofabrik.de/) and place in `data/raw/`.
+
+---
+
+## Mobile App Setup
+
+```bash
+cd mobile_app/GhalaSafetyApp
+npm install
+npx expo start
+```
+
+Scan the QR code with **Expo Go** on your phone (Android / iOS).
+
+---
+
+## Data Pipeline
+
+```
+OSM API
+  ↓  osm_parser.py
+Street Network (GraphML)
+  ↓  02_detect_junctions.py
+Classified Junctions → data/visualizations/*.png
+  ↓  03_generate_hazard_points.py
+Hazard Points displaced 75m (GeoJSON)
+  ↓  04_export_hazard_data.py
+Compact JSON for mobile app (48 KB for Oxford)
+```
+
+### Danger scoring factors
+- Junction type (T-junction = 0.7, crossroads = 0.5, 5-way = 0.8)
+- Speed differential between connecting roads
+- Road classification mismatch (e.g. primary meets residential)
+
+### Oxford, UK results (March 2026)
+- 3,388 road nodes — 2,258 junctions identified
+- **274 hazard warning points** generated (threshold ≥ 0.35)
+- Danger scores: 0.35 – 0.745 | Export: **48.5 KB**
+
+---
+
+## Milestones
+
+| Date | Milestone |
+|------|-----------|
+| Feb 2, 2026 | Initial plan submitted ✅ |
+| Mar 2, 2026 | Data processing complete ✅ |
+| Apr 6, 2026 | Core app functionality |
+| May 4, 2026 | Testing & refinement |
+| Jul 5, 2026 | Final report submission |
+
 
 ### Data Processing:
 - Python 3.9+
@@ -244,15 +358,6 @@ All research completed in Week 1:
 - OpenStreetMap: https://www.openstreetmap.org/
 - Geofabrik: https://download.geofabrik.de/
 
-## License
-
-Academic Project - [Your University]
-
-## Contact
-
-**Student:** [Your Name]  
-**Email:** [Your Email]  
-**Supervisor:** Crispin Cooper
 
 ---
 

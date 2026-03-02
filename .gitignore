@@ -10,6 +10,7 @@ ENV/
 *.egg-info/
 dist/
 build/
+docs/
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
@@ -22,11 +23,12 @@ build/
 *.swo
 *~
 
-# Data files - ignore large raw OSM files
+# Data files - ignore raw OSM source files
 *.osm
 *.osm.pbf
 *.osm.bz2
 *.gpkg
+data/raw/
 
 # Cache files
 cache/
@@ -34,6 +36,12 @@ cache/
 
 # Personal planning files
 plant.txt
+
+# Documentation and research (local only)
+docs/
+research/
+*.md
+!README.md
 
 # Python download scripts (keep local only)
 src/01_download_osm_data.py
